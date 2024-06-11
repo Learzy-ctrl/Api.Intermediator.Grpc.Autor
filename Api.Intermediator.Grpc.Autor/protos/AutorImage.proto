@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option csharp_namespace = "gRPC.Microservicio.Autor";
+
+package AutorImage;
+
+
+service AutorImage{
+	rpc AddAutorIMG (AutorIMG) returns (response) {}
+	rpc GetAutoresIMG (Empty) returns (AutoresIMGList) {}
+	rpc GetAutorIMGByGuid (Autorid) returns (AutorIMG) {}
+}
+
+message AutorIMG{
+	string AutorGuid = 1;
+	bytes Image = 2;
+}
+
+message Autorid{
+	string id = 1;
+}
+
+message response{
+	string message = 1;
+}
+
+message AutoresIMGList {
+    repeated AutorIMG autores = 1;
+}
+
+message Empty {}
