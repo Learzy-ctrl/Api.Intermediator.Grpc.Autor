@@ -18,7 +18,7 @@
   </ItemGroup>
 	
 	<ItemGroup>
-		<Protobuf Include="Protos\AutorImage.proto" GrpcServices="Client" />
+		<Protobuf Include="protos\AutorImage.proto" GrpcServices="Client" />
 	</ItemGroup>
 
 </Project>

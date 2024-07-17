@@ -1,6 +1,7 @@
 ﻿using Api.Intermediator.Grpc.Autor.Model;
 using Google.Protobuf;
 using gRPC.Microservicio.Autor;
+using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,22 @@ namespace Api.Intermediator.Grpc.Autor.Controllers
     [ApiController]
     public class AutorImageController : ControllerBase
     {
+        private readonly ILogger<AutorImageController> _logger;
+
+        public AutorImageController(ILogger<AutorImageController> logger)
+        {
+            _logger = logger;
+        }
+
         [HttpPost]
         public async Task<ActionResult> AddImage(ModelAutor model)
         {
-            var channel = GrpcChannel.ForAddress("https://localhost:7211");
+            _logger.LogInformation("Starting AddImage method");
+
+            var channel = GrpcChannel.ForAddress("http://grpc_server:5000", new GrpcChannelOptions
+            {
+                HttpHandler = new HttpClientHandler()
+            });
             var client = new AutorImage.AutorImageClient(channel);
             string modelImage = model.Image;
             byte[] imageBytes = Convert.FromBase64String(modelImage);
@@ -23,20 +36,26 @@ namespace Api.Intermediator.Grpc.Autor.Controllers
                 Image = ByteString.CopyFrom(imageBytes)
             };
 
-           
-
+            _logger.LogInformation("Sending gRPC request to add image");
             var response = await client.AddAutorIMGAsync(imageRequest);
+            _logger.LogInformation("Received gRPC response for AddImage");
+
             return new JsonResult(response);
         }
 
         [HttpGet]
         public async Task<ActionResult> GetImages()
         {
+            _logger.LogInformation("Starting GetImages method");
+
             var list = new List<ModelAutor>();
-            var channel = GrpcChannel.ForAddress("https://localhost:7211");
+            var channel = GrpcChannel.ForAddress("http://grpc_server:5000", new GrpcChannelOptions
+            {
+                HttpHandler = new HttpClientHandler()
+            });
             var client = new AutorImage.AutorImageClient(channel);
             var response = await client.GetAutoresIMGAsync(new Empty());
-            foreach(var autor in response.Autores)
+            foreach (var autor in response.Autores)
             {
                 var oAutor = new ModelAutor()
                 {
@@ -49,13 +68,20 @@ namespace Api.Intermediator.Grpc.Autor.Controllers
             {
                 request = list
             };
+
+            _logger.LogInformation("Returning images list");
             return new JsonResult(json);
         }
 
         [HttpGet("{guid}")]
         public async Task<ActionResult> GetImagesById(string guid)
         {
-            var channel = GrpcChannel.ForAddress("https://localhost:7211");
+            _logger.LogInformation($"Starting GetImagesById method for guid: {guid}");
+
+            var channel = GrpcChannel.ForAddress("http://grpc_server:5000", new GrpcChannelOptions
+            {
+                HttpHandler = new HttpClientHandler()
+            });
             var client = new AutorImage.AutorImageClient(channel);
             var request = new Autorid
             {
@@ -65,8 +91,10 @@ namespace Api.Intermediator.Grpc.Autor.Controllers
             var json = new
             {
                 Guid = response.AutorGuid,
-                Image = response.Image
+                Image = response.Image.ToBase64()
             };
+
+            _logger.LogInformation($"Returning image for guid: {guid}");
             return new JsonResult(json);
         }
     }
